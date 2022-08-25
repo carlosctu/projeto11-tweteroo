@@ -1,23 +1,84 @@
+import cors from "cors";
 import express from "express";
 
+// Inicializando o express
 const app = express();
-// isso daqui fará com que o nosso body detecte
-//  os dados JSON e fará o parse desses dados
-// para que possamos visualizar eles através do body
+// subir o servidor local na web e utilizar ele
+app.use(cors());
+// Dizendo pro express que iremos ter dados em JSON
+// e que vai precisa fazer um parse para que o js possa ler eles
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
-const users = [
-  {
-    username: "Vovo Juju",
-    avatar:
-      "https://super.abril.com.br/wp-content/uploads/2020/09/04-09_gato_SITE.jpg?quality=70&strip=info",
-  },
-];
+const users = [];
+const tweets = [];
+let cont = 0;
 
 app.post("/sign-up", (req, res) => {
-  console.log(req.body);
-  res.status(201).send("Ok");
+  // Object.keys pega os ids do objeto
+  // Object.values pega os valores dos ids
+  const keys = Object.keys(req.body);
+  const values = Object.values(req.body);
+  const validateKeys = keys[0] === "username" && keys[1] === "avatar";
+  const validateValues = values[0] && values[1];
+
+  if (validateKeys && validateValues) {
+    users.push(req.body);
+    res.status(201).send("Ok");
+  } else {
+    res.status(400).send("Todos os campos são obrigatórios!");
+  }
+});
+
+app.post("/tweets", (req, res) => {
+  const user = req.get("User");
+  const keys = Object.keys(req.body);
+  const values = Object.values(req.body);
+  // const validateKeys = keys[0] === "username" && keys[1] === "tweet";
+  // const validateValues = values[0] && values[1];
+  const validateKeys = user && keys[0] === "tweet";
+  const validateValues = values[0];
+
+  if (validateKeys && validateValues) {
+    tweets.push({ id: cont++, ...req.body });
+    res.status(201).send("Ok");
+  } else {
+    res.status(400).send("Todos os campos são obrigatórios!");
+  }
+});
+
+app.get("/tweets", (req, res) => {
+  let lastTweets = [];
+  for (let i = 0; i < tweets.length; i++) {
+    let lastTweet = tweets.length - (i + 1);
+    if (lastTweets.length === 10) break;
+
+    const userAvatar = users.find(
+      (user) => tweets[lastTweet].username === user.username
+    );
+
+    lastTweets.push({
+      ...tweets[lastTweet],
+      avatar: userAvatar.avatar,
+    });
+  }
+
+  res.status(200).send(lastTweets);
+});
+
+app.get("/tweets/:username", (req, res) => {
+  const username = req.params.username;
+  const avatar = users.find((user) => user.username === username);
+
+  let userTweets = [];
+
+  tweets.map((tweet) => {
+    if (tweet.username === username) {
+      userTweets.push({ ...tweet, avatar: avatar.avatar });
+    }
+  });
+
+  res.status(200).send(userTweets);
 });
 
 app.listen(5000, () => {
