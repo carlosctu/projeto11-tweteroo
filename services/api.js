@@ -12,7 +12,6 @@ app.use(express.urlencoded({ extended: false }));
 
 const users = [];
 const tweets = [];
-let cont = 0;
 
 app.post("/sign-up", (req, res) => {
   // Object.keys pega os ids do objeto
@@ -40,7 +39,7 @@ app.post("/tweets", (req, res) => {
   const validateValues = values[0];
 
   if (validateKeys && validateValues) {
-    tweets.push({ id: cont++, ...req.body });
+    tweets.push({ id: tweets.length + 1, ...req.body });
     res.status(201).send("Ok");
   } else {
     res.status(400).send("Todos os campos são obrigatórios!");
@@ -50,9 +49,10 @@ app.post("/tweets", (req, res) => {
 app.get("/tweets", (req, res) => {
   let lastTweets = [];
   for (let i = 0; i < tweets.length; i++) {
-    let lastTweet = tweets.length - (i + 1);
     if (lastTweets.length === 10) break;
 
+    let lastTweet = tweets.length - (i + 1);
+    
     const userAvatar = users.find(
       (user) => tweets[lastTweet].username === user.username
     );
